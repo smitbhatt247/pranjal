@@ -26,7 +26,7 @@
 #include <string.h>
 
 #define BOARD_SIZE 4
-#define DEBUG(format, ...) 42
+#define DEBUG(format, ...) 42//printf("[DEBUG] %s(%s:%i) " format "\n", __func__ ,__FILE__, __LINE__, __VA_ARGS__)
 
 struct Game {
 	struct Board *board;
@@ -36,11 +36,11 @@ struct Game {
 
 /* RNG START */
 struct RNG {
-	int a;
-	int X;
-	int q;
-	int r;
-	int m;
+	int32_t a;
+	int32_t X;
+	int32_t q;
+	int32_t r;
+	int32_t m;
 };
 
 /**
@@ -83,7 +83,7 @@ void rng_init(struct RNG *rng) {
 	rng->a = 48271;
 
 	/* Seed our RNG with the kernel's RNG */
-	int X = 0;
+	int32_t X = 0;
 	while (X <= 0 || X >= 2147483647) {
 		X = random();
 		/*if (getrandom(&X, 4, 0) == -1) {
@@ -121,8 +121,8 @@ void rng_destroy(struct RNG *rng) {
  * Returns: A random integer in [0,2147483647)
  *  
  **/
-int rng_generate(struct RNG *rng) {
-	int X = rng->X;
+int32_t rng_generate(struct RNG *rng) {
+	int32_t X = rng->X;
 	X = rng->a * (X % rng->q) - rng->r * (X / rng->q);
 
 	if (X < 0) {
@@ -141,16 +141,16 @@ int rng_generate(struct RNG *rng) {
  * Returns: A random integer in [0,k)
  *  
  **/
-int rng_generate_k(struct RNG *rng, int k) {
-	int X = rng_generate(rng);
-	int m = rng->m;
+int32_t rng_generate_k(struct RNG *rng, int32_t k) {
+	int32_t X = rng_generate(rng);
+	int32_t m = rng->m;
 
 	while (X >= (m - (m % k))) {
 		X = rng_generate(rng);
 	}
 
 	// DEBUG("X: %i, k: %i, m: %i", X, k, m);
-	return ((int)(X) * (int)(k)) / ((int)(m-1));
+	return ((uint64_t)(X) * (uint64_t)(k)) / ((uint64_t)(m-1));
 }
 
 /**
@@ -161,7 +161,7 @@ int rng_generate_k(struct RNG *rng, int k) {
  * Returns: A random integer in [l,r)
  *  
  **/
-int rng_generate_l_r(struct RNG *rng, int l, int r) {
+int32_t rng_generate_l_r(struct RNG *rng, int32_t l, int32_t r) {
 	return l + rng_generate_k(rng, r - l);
 }
 
@@ -315,7 +315,7 @@ void board_print(struct Board *board) {
 	int max_width[4] = { 0, };
 	for (int j = 0; j < BOARD_SIZE; j++) {
 		for (int i = 0; i < BOARD_SIZE; i++) {
-			max_width[j] = max(max_width[j], count_digits(1 << board->tiles[i][j].log2value));
+			max_width[j] = 4;//max(max_width[j], count_digits(1 << board->tiles[i][j].log2value));
 		}
 		DEBUG("max_width[%i]: %i", j, max_width[j]);
 	}
@@ -494,9 +494,9 @@ void game_add_random_tile(struct Game *game) {
 	board->tiles[tile_pos[0]][tile_pos[1]].log2value = tile_value;
 }
 
-int findTarget(int array[BOARD_SIZE], int x, int stop)
+uint8_t findTarget(uint8_t array[BOARD_SIZE], uint8_t x, uint8_t stop)
 {
-        int t;
+        uint8_t t;
         // if the position is already on the first, don't evaluate
         if (x == 0)
         {
@@ -535,7 +535,7 @@ int findTarget(int array[BOARD_SIZE], int x, int stop)
  * of 2048.
  *  
  **/
-bool slide_array(int array[BOARD_SIZE], int *score) {
+bool slide_array(uint8_t array[BOARD_SIZE], uint32_t *score) {
 	bool success = false;
 	int t, stop = 0;
 
@@ -552,7 +552,7 @@ bool slide_array(int array[BOARD_SIZE], int *score) {
 					// merge (increase power of two)
 					array[t]++;
 					// increase score
-					*score += (int)1 << array[t];
+					*score += (uint32_t)1 << array[t];
 					// set stop to avoid double merge
 					stop = t + 1;
 				}
@@ -575,8 +575,8 @@ bool slide_array(int array[BOARD_SIZE], int *score) {
  **/
 void rotate_board(struct Board *board) {
 	struct tile **tiles = board->tiles;
-        int i, j, n = BOARD_SIZE;
-        int tmp;
+        uint8_t i, j, n = BOARD_SIZE;
+        uint8_t tmp;
         for (i = 0; i < n / 2; i++)
         {
                 for (j = i; j < n - i - 1; j++)
@@ -602,10 +602,10 @@ void rotate_board(struct Board *board) {
 void move_w(struct Game *game) {
 	struct Board *board = game->board;
 	bool success = false;
-	int arr[BOARD_SIZE];
+	uint8_t arr[BOARD_SIZE];
 	for (int i = 0; i < BOARD_SIZE; i++) {
 		for (int j = 0; j < BOARD_SIZE; j++) {
-			arr[j] = (int)board->tiles[j][i].log2value;
+			arr[j] = (uint8_t)board->tiles[j][i].log2value;
 			DEBUG("arr[%i]: %i", j, arr[j]);
 		}
 		success |= slide_array(arr, &game->score);
@@ -630,7 +630,7 @@ void move_a(struct Game *game) {
 	rotate_board(board);
 	rotate_board(board);
 	rotate_board(board);
-	//int arr[BOARD_SIZE];
+	//uint8_t arr[BOARD_SIZE];
 	move_w(game);
 //	for (int i = 0; i < BOARD_SIZE; i++) {
 //		for (int j = 0; j < BOARD_SIZE; j++) {
@@ -659,7 +659,7 @@ void move_s(struct Game *game) {
 	rotate_board(board);
 	rotate_board(board);
 	move_w(game);
-	//int arr[BOARD_SIZE];
+	//uint8_t arr[BOARD_SIZE];
 	/*for (int i = 0; i < BOARD_SIZE; i++) {
 		for (int j = 0; j < BOARD_SIZE; j++) {
 			arr[j] = board->tiles[i][j].log2value;
@@ -686,7 +686,7 @@ void move_d(struct Game *game) {
 	struct Board *board = game->board;
 	bool success = false;
 	rotate_board(board);
-	/*int arr[BOARD_SIZE];
+	/*uint8_t arr[BOARD_SIZE];
 	for (int i = 0; i < BOARD_SIZE; i++) {
 		for (int j = 0; j < BOARD_SIZE; j++) {
 			arr[j] = board->tiles[i][j].log2value;
@@ -717,8 +717,9 @@ void game_init(struct Game *game) {
 }
 
 void game_render(struct Game *game) {
-	printf("SCORE: %i\n", game->score);
+	printf("\nSCORE: %i\n\n", game->score);
 	board_print(game->board);
+	putchar('\n');
 }
 
 void game_destroy(struct Game *game) {
@@ -728,8 +729,6 @@ void game_destroy(struct Game *game) {
 }
 
 void processInput(struct Game *game) {
-	struct Board *board = game->board;
-
 	char move;
 	do {
 		move = getchar();
@@ -759,6 +758,9 @@ void processInput(struct Game *game) {
 int main(int argc, char **argv) {
 	struct Game *game = game_create();
 	game_init(game);
+
+	puts("Welcome to the 2048 game");
+	game_render(game);
 
 	/* Main game loop */
 	while (!game_over(game)) {
