@@ -35,16 +35,16 @@
 #define DEFAULT "\x1b[0m"
 #define BOARD_SIZE 4
 
-#define DEBUG(format, ...) 42
+#define DEBUG(format, ...) 42//printf("[DEBUG] %s(%s:%i) " format "\n", __func__ ,__FILE__, __LINE__, __VA_ARGS__)
 
 
 /* RNG START */
 struct RNG {
-	int a;
-	int X;
-	int q;
-	int r;
-	int m;
+	int32_t a;
+	int32_t X;
+	int32_t q;
+	int32_t r;
+	int32_t m;
 };
 
 /**
@@ -87,7 +87,7 @@ void rng_init(struct RNG *rng) {
 	rng->a = 48271;
 
 	/* Seed our RNG with the kernel's RNG */
-	int X = 0;
+	int32_t X = 0;
 	while (X <= 0 || X >= 2147483647) {
 		X = random();
 		/*if (getrandom(&X, 4, 0) == -1) {
@@ -125,8 +125,8 @@ void rng_destroy(struct RNG *rng) {
  * Returns: A random integer in [0,2147483647)
  *  
  **/
-int rng_generate(struct RNG *rng) {
-	int X = rng->X;
+int32_t rng_generate(struct RNG *rng) {
+	int32_t X = rng->X;
 	X = rng->a * (X % rng->q) - rng->r * (X / rng->q);
 
 	if (X < 0) {
@@ -145,16 +145,16 @@ int rng_generate(struct RNG *rng) {
  * Returns: A random integer in [0,k)
  *  
  **/
-int rng_generate_k(struct RNG *rng, int k) {
-	int X = rng_generate(rng);
-	int m = rng->m;
+int32_t rng_generate_k(struct RNG *rng, int32_t k) {
+	int32_t X = rng_generate(rng);
+	int32_t m = rng->m;
 
 	while (X >= (m - (m % k))) {
 		X = rng_generate(rng);
 	}
 
 	// DEBUG("X: %i, k: %i, m: %i", X, k, m);
-	return ((int)(X) * (int)(k)) / ((int)(m-1));
+	return ((uint64_t)(X) * (uint64_t)(k)) / ((uint64_t)(m-1));
 }
 
 /**
@@ -163,7 +163,7 @@ int rng_generate_k(struct RNG *rng, int k) {
  * Returns: A random integer in [l,r)
  *  
  **/
-int rng_generate_l_r(struct RNG *rng, int l, int r) {
+int32_t rng_generate_l_r(struct RNG *rng, int32_t l, int32_t r) {
 	return l + rng_generate_k(rng, r - l);
 }
 
