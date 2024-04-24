@@ -1,4 +1,20 @@
-
+/* main.c
+ *
+ * Copyright (C) 2024  Pranjal Kole <pranjal.kole7@gmail.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,34 +35,143 @@
 #define DEFAULT "\x1b[0m"
 #define BOARD_SIZE 4
 
-#define DEBUG(format, ...) 42
+#define DEBUG(format, ...) 42//printf("[DEBUG] %s(%s:%i) " format "\n", __func__ ,__FILE__, __LINE__, __VA_ARGS__)
 
 
+/* RNG START */
+struct RNG {
+	int32_t a;
+	int32_t X;
+	int32_t q;
+	int32_t r;
+	int32_t m;
+};
 
 /**
- * generate_k:
+ * rng_create:
+ *
+ * Create an RNG.
+ *
+ * Returns: A pointer to a `struct RNG`
+ **/
+struct RNG *rng_create(void) {
+	struct RNG *rng = malloc(sizeof(struct RNG));
+	if (rng == NULL) {
+		perror("Could not allocate memory");
+		exit(EXIT_FAILURE);
+	}
+	return rng;
+}
+
+/**
+ * rng_init:
+ *
+ * @rng: A created RNG
+ *
+ * Initialise @rng with a linear congruential random number generator.
+ *  
+ **/
+void rng_init(struct RNG *rng) {
+	/* We are using a linear congruential random number generator
+	 * variant for C as given in TAoCP Vol 2.
+	 *
+	 * X <- aX mod m
+	 *
+	 * `a` should be a primitive root of `m`
+	 * `X` should be a random number
+	 * `q` is `m` / `a`
+	 * `r` is `m` % `a`
+	 * `m` should be a prime number
+	 */
+	/* An `a` of 48271 passes the spectral test */
+	rng->a = 48271;
+
+	/* Seed our RNG with the kernel's RNG */
+	int32_t X = 0;
+	while (X <= 0 || X >= 2147483647) {
+		X = random();
+		/*if (getrandom(&X, 4, 0) == -1) {
+			perror("Could not get random bytes");
+			exit(EXIT_FAILURE);
+		}*/
+	}
+	rng->X = X;
+
+	rng->q = 44488;
+	rng->r = 3399;
+
+	/* A mersenne prime - 2^31 - 1 */
+	rng->m = 2147483647;
+}
+
+/**
+ * rng_destroy:
+ *
+ * @rng: An RNG
+ *
+ * Destroys the linear congruential random number generator created
+ * by a previous call to `rng_create`.
+ *
+ **/
+void rng_destroy(struct RNG *rng) {
+	free(rng);
+}
+
+/**
+ * rng_generate:
+ *
+ * @rng: An RNG
+ *
+ * Returns: A random integer in [0,2147483647)
+ *  
+ **/
+int32_t rng_generate(struct RNG *rng) {
+	int32_t X = rng->X;
+	X = rng->a * (X % rng->q) - rng->r * (X / rng->q);
+
+	if (X < 0) {
+		X += rng->m;
+	}
+
+	rng->X = X;
+	return X;
+}
+
+/**
+ * rng_generate_k:
+ *
+ * @rng: An RNG
  *
  * Returns: A random integer in [0,k)
  *  
  **/
-int generate_k(int k) {
-	return rand() % k;
+int32_t rng_generate_k(struct RNG *rng, int32_t k) {
+	int32_t X = rng_generate(rng);
+	int32_t m = rng->m;
+
+	while (X >= (m - (m % k))) {
+		X = rng_generate(rng);
+	}
+
+	// DEBUG("X: %i, k: %i, m: %i", X, k, m);
+	return ((uint64_t)(X) * (uint64_t)(k)) / ((uint64_t)(m-1));
 }
 
 /**
- * generate_l_r:
+ * rng_generate_l_r:
  *
  * Returns: A random integer in [l,r)
  *  
  **/
-int generate_l_r(int l, int r) {
-	return l + generate_k(r - l);
+int32_t rng_generate_l_r(struct RNG *rng, int32_t l, int32_t r) {
+	return l + rng_generate_k(rng, r - l);
 }
 
 // Struct Definitions:
 		/* Represents a single tile in the board */
 		struct Game {
-			struct Board* board;
+			struct RNG *rng;
+			struct Board *board;
 			int score;
 		};
 		struct tile {
@@ -66,7 +191,7 @@ int generate_l_r(int l, int r) {
 		/* Board START */
 		struct Board {
 			/* A 2D array of tiles to represent the board */
-			struct tile** tiles;
+			struct tile **tiles;
 		};
 
 
@@ -121,7 +246,7 @@ int count_digits(int num) {
 
 
 
-bool _2048(struct Board* board)
+bool _2048(struct Board *board)
 {
 	
 	for(int i=0;i<BOARD_SIZE;i++)
@@ -272,9 +397,9 @@ void game_add_random_tile(struct Game *game) {
 		}
 	}
 
-	int tile_position = generate_k(coords_idx);
+	int tile_position = rng_generate_k(game->rng, coords_idx);
 	int tile_pos[] = { coords[tile_position][0], coords[tile_position][1] };
-	int tile_value = generate_l_r(1, 3);
+	int tile_value = rng_generate_l_r(game->rng, 1, 3);
 	DEBUG("tile_pos: (%i, %i), tile_value: %i", tile_pos[0], tile_pos[1], tile_value);
 	board->tiles[tile_pos[0]][tile_pos[1]].log2value = tile_value;
 }
@@ -576,7 +701,7 @@ void board_print(struct Board *board) {
  * Initialises a created board according to the rules of 2048.
  *  
  **/
-void board_init(struct Board *board) {
+void board_init(struct Board *board, struct RNG *rng) {
 	
 	struct tile **tiles = board->tiles;
 	for (int i = 0; i < BOARD_SIZE; i++) {
@@ -585,15 +710,15 @@ void board_init(struct Board *board) {
 		}
 	}
 
-	int first_tile_value = generate_l_r(1, 3);
-	int second_tile_value = generate_l_r(1, 3);
+	int first_tile_value = rng_generate_l_r(rng, 1, 3);
+	int second_tile_value = rng_generate_l_r(rng, 1, 3);
 
-	int x = generate_k(4);
-	int y = generate_k(4);
+	int x = rng_generate_k(rng, 4);
+	int y = rng_generate_k(rng, 4);
 	tiles[x][y].log2value = first_tile_value;
 	while (tiles[x][y].log2value != 0) {
-		x = generate_k(4);
-		y = generate_k(4);
+		x = rng_generate_k(rng, 4);
+		y = rng_generate_k(rng, 4);
 	}
 	tiles[x][y].log2value = second_tile_value;
 	board->tiles = tiles;
@@ -602,8 +727,9 @@ void board_init(struct Board *board) {
 
 
 void game_init(struct Game *game) {
-	game->score=0;
-	board_init(game->board);
+	game->score = 0;
+	rng_init(game->rng);
+	board_init(game->board, game->rng);
 }
 
 /**
@@ -642,13 +768,14 @@ struct Board* board_create() {
 
 struct Game* game_create(void) {
 	struct Game* game = malloc(sizeof(struct Game));
+	game->rng = rng_create();
 	game->board = board_create();
 	return game;
 }
 
 int main(int argc, char **argv) {
 	
-	srand(time(NULL));
+	srandom(time(NULL));
 	struct Game* game = game_create();
 	game_init(game);
 	
@@ -664,6 +791,7 @@ int main(int argc, char **argv) {
 	printf("6. Game Over: Grid fills up with no more moves.\n");
 	printf("7. Scoring: Points for each merged tile.\n");
 	printf("8. Strategy: Plan ahead to create higher value tiles and keep the grid open.\n");
+	printf("9. Press 'q' to quit\n");
 	printf("\t\t\t=> You can do the following moves\n");
 	printf("\t\t\t1.Press 'w' to swipe top \n");
 	printf("\t\t\t2.Press 'a' to swipe left \n");
@@ -679,11 +807,12 @@ int main(int argc, char **argv) {
 	bool flip = true;
 	/* Main game loop */
 	while (!game_over(game) && !(_2048(game->board))) {
-	if(flip)
-		printf(RED);
-	else
-		printf(CYAN);
-	flip = !flip;
+		if (flip) {
+			printf(RED);
+		} else {
+			printf(CYAN);
+		}
+		flip = !flip;
 		/* This blocks until a character is received */
 		processInput(game);
 		
