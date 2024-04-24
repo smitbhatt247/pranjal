@@ -87,11 +87,11 @@ void rng_init(struct RNG *rng) {
 	/* An `a` of 48271 passes the spectral test */
 	rng->a = 48271;
 
-	srandom(time(NULL));
+	srand(time(NULL));
 	/* Seed our RNG with the kernel's RNG */
 	int32_t X = 0;
 	while (X <= 0 || X >= 2147483647) {
-		X = random();
+		X = rand();
 		/*if (getrandom(&X, 4, 0) == -1) {
 			perror("Could not get random bytes");
 			exit(EXIT_FAILURE);
