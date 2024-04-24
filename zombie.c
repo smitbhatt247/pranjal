@@ -122,27 +122,27 @@ void rulesandinst()
 void backstory()
 {
     printf("Hello... \t");
-    delay(1.5);
+    delay(0.5);
     printf("Hello.. \t");
-    delay(1.5);
+    delay(0.5);
     printf("Is anyone there? \n\n");
-    delay(2);
+    delay(1);
     printf("I walk closer to this weird looking man \n\n");
-    delay(2);
+    delay(1);
     printf("Its dark.. ");
-    delay(1.5);
+    delay(0.5);
     printf("street lights flicker...");
-    delay(1.5);
+    delay(0.5);
     printf("I cant see his face clearly\n\n");
-    delay(1.5);
+    delay(0.5);
     printf("Hey(I walk closer) \n\n");
-    delay(1.5);
+    delay(0.5);
     printf("After everyone disappeared i thought i will not find anyone but you.... \n\n");
-    delay(1.5);
+    delay(0.5);
     printf("Hey... \n");
-    delay(1.5);
+    delay(0.5);
     printf("BRHHHH RHHHHHH SEHHHHH...");
-    delay(3);
+    delay(2);
 }
 // main function of the game
 void main_zombie(void)
