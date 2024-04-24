@@ -3,10 +3,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
-
-// defining max and min
-#define max(x, y) (((x) > (y)) ? (x) : (y))
-#define min(x, y) (((x) < (y)) ? (x) : (y))
+#include "misc.h"
 
 // to delay the running screen
 void delay(float number_of_seconds)
@@ -91,7 +88,7 @@ void rulesandinst()
 {
     printf("\n\n\t\t\t\t\t\t\t Zombie Game\n\n");
     delay(0.5);
-    printf("Welcome to the best 2-D survival game on C\n\n");
+    printf("Welcome to the best 2-D survival game in C\n\n");
     delay(0.5);
 
     // #instructions of the game
@@ -148,7 +145,7 @@ void backstory()
     delay(3);
 }
 // main function of the game
-int main()
+void main_zombie(void)
 {
     int maxscore[7];
     for (int i = 0; i < 7; i++)

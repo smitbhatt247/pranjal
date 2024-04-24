@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <string.h>
+#include "misc.h"
 
 #define RED     "\x1b[31m"
 #define GREEN   "\x1b[32m"
@@ -215,19 +216,6 @@ void board_destroy(struct Board *board) {
 	free(board);
 }
 /* Board END */
-
-/**
- * max:
- * 
- * @a: A number
- * @b: A number
- *
- * Returns: The maximum number among @a and @b.
- *
- **/
-int max(int a, int b) {
-	return a > b ? a : b;
-}
 
 /**
  * count_digits:
@@ -774,7 +762,7 @@ struct Game* game_create(void) {
 	return game;
 }
 
-int main(int argc, char **argv) {
+void main_2048(void) {
 	struct Game* game = game_create();
 	game_init(game);
 	
@@ -830,5 +818,4 @@ int main(int argc, char **argv) {
 	/* Freeing all the allocated memory */
 	
 	game_destroy(game);
-	return EXIT_SUCCESS;
 }

@@ -1,2 +1,2 @@
 all:
-	gcc -o 2048 final.c
+	gcc -o project main.c 2048.c zombie.c misc.c
