@@ -86,6 +86,7 @@ void rng_init(struct RNG *rng) {
 	/* An `a` of 48271 passes the spectral test */
 	rng->a = 48271;
 
+	srandom(time(NULL));
 	/* Seed our RNG with the kernel's RNG */
 	int32_t X = 0;
 	while (X <= 0 || X >= 2147483647) {
@@ -774,29 +775,27 @@ struct Game* game_create(void) {
 }
 
 int main(int argc, char **argv) {
-	
-	srandom(time(NULL));
 	struct Game* game = game_create();
 	game_init(game);
 	
 	
 	printf(CYAN);
 	puts("\t\t\t****Welcome to the 2048 game****");
-	printf("\t\t\tInstructions are as follows : \n");
-	printf("1. Board: Play on a 4x4 grid.\n");
-	printf("2. Tiles: Merge tiles to create ones with higher numbers, starting from 2.\n");
-	printf("3. Movement: Swipe in four directions to move tiles.\n");
-	printf("4. Combining Tiles: When tiles with the same number touch, they merge.\n");
-	printf("5. Objective: Reach the 2048 tile.\n");
-	printf("6. Game Over: Grid fills up with no more moves.\n");
-	printf("7. Scoring: Points for each merged tile.\n");
-	printf("8. Strategy: Plan ahead to create higher value tiles and keep the grid open.\n");
-	printf("9. Press 'q' to quit\n");
-	printf("\t\t\t=> You can do the following moves\n");
-	printf("\t\t\t1.Press 'w' to swipe top \n");
-	printf("\t\t\t2.Press 'a' to swipe left \n");
-	printf("\t\t\t3.Press 's' to swipe bottom \n");
-	printf("\t\t\t4.Press 'd' to swipe right \n");
+	puts("\t\t\tInstructions are as follows : ");
+	puts("1. Board: Play on a 4x4 grid.");
+	puts("2. Tiles: Merge tiles to create ones with higher numbers, starting from 2.");
+	puts("3. Movement: Swipe in four directions to move tiles.");
+	puts("4. Combining Tiles: When tiles with the same number touch, they merge.");
+	puts("5. Objective: Reach the 2048 tile.");
+	puts("6. Game Over: Grid fills up with no more moves.");
+	puts("7. Scoring: Points for each merged tile.");
+	puts("8. Strategy: Plan ahead to create higher value tiles and keep the grid open.");
+	puts("9. Press 'q' to quit");
+	puts("\t\t\t=> You can do the following moves");
+	puts("\t\t\t1.Press 'w' to swipe top");
+	puts("\t\t\t2.Press 'a' to swipe left");
+	puts("\t\t\t3.Press 's' to swipe bottom");
+	puts("\t\t\t4.Press 'd' to swipe right");
 	
 	
 	
