@@ -158,7 +158,7 @@ int32_t rng_generate_k(struct RNG *rng, int32_t k) {
 }
 
 /**
- * generate_l_r:
+ * rng_generate_l_r:
  *
  * Returns: A random integer in [l,r)
  *  
@@ -170,7 +170,8 @@ int32_t rng_generate_l_r(struct RNG *rng, int32_t l, int32_t r) {
 // Struct Definitions:
 		/* Represents a single tile in the board */
 		struct Game {
-			struct Board* board;
+			struct RNG *rng;
+			struct Board *board;
 			int score;
 		};
 		struct tile {
@@ -190,7 +191,7 @@ int32_t rng_generate_l_r(struct RNG *rng, int32_t l, int32_t r) {
 		/* Board START */
 		struct Board {
 			/* A 2D array of tiles to represent the board */
-			struct tile** tiles;
+			struct tile **tiles;
 		};
 
 
@@ -245,7 +246,7 @@ int count_digits(int num) {
 
 
 
-bool _2048(struct Board* board)
+bool _2048(struct Board *board)
 {
 	
 	for(int i=0;i<BOARD_SIZE;i++)
@@ -396,9 +397,9 @@ bool _2048(struct Board* board)
 				}
 			}
 
-			int tile_position = generate_k(coords_idx);
+			int tile_position = rng_generate_k(game->rng, coords_idx);
 			int tile_pos[] = { coords[tile_position][0], coords[tile_position][1] };
-			int tile_value = generate_l_r(1, 3);
+			int tile_value = rng_generate_l_r(game->rng, 1, 3);
 			DEBUG("tile_pos: (%i, %i), tile_value: %i", tile_pos[0], tile_pos[1], tile_value);
 			board->tiles[tile_pos[0]][tile_pos[1]].log2value = tile_value;
 		}
@@ -700,7 +701,7 @@ void board_print(struct Board *board) {
 		 * Initialises a created board according to the rules of 2048.
 		 *  
 		 **/
-		void board_init(struct Board *board) {
+		void board_init(struct Board *board, struct RNG *rng) {
 			
 			struct tile **tiles = board->tiles;
 			for (int i = 0; i < BOARD_SIZE; i++) {
@@ -709,15 +710,15 @@ void board_print(struct Board *board) {
 				}
 			}
 
-			int first_tile_value = generate_l_r(1, 3);
-			int second_tile_value = generate_l_r(1, 3);
+			int first_tile_value = rng_generate_l_r(rng, 1, 3);
+			int second_tile_value = rng_generate_l_r(rng, 1, 3);
 
-			int x = generate_k(4);
-			int y = generate_k(4);
+			int x = rng_generate_k(rng, 4);
+			int y = rng_generate_k(rng, 4);
 			tiles[x][y].log2value = first_tile_value;
 			while (tiles[x][y].log2value != 0) {
-				x = generate_k(4);
-				y = generate_k(4);
+				x = rng_generate_k(rng, 4);
+				y = rng_generate_k(rng, 4);
 			}
 			tiles[x][y].log2value = second_tile_value;
 			board->tiles = tiles;
@@ -727,7 +728,8 @@ void board_print(struct Board *board) {
 		
 		void game_init(struct Game *game) {
 			game->score=0;
-			board_init(game->board);
+			rng_init(game->rng);
+			board_init(game->board, game->rng);
 		}
 		
 		/**
@@ -738,15 +740,15 @@ void board_print(struct Board *board) {
 		 * Returns: A board
 		 *  
 		 **/
-		struct Board* board_create() {
-			struct Board* board = malloc(sizeof(struct Board));
+		struct Board *board_create() {
+			struct Board *board = malloc(sizeof(struct Board));
 			
 			if (board == NULL) {
 				perror("Could not allocate memory");
 				exit(EXIT_FAILURE);
 			}
 
-			struct tile** tiles = malloc(BOARD_SIZE * sizeof(struct tile*));
+			struct tile **tiles = malloc(BOARD_SIZE * sizeof(struct tile *));
 			
 			if (tiles == NULL) {
 				perror("Could not allocate memory");
@@ -764,17 +766,18 @@ void board_print(struct Board *board) {
 			return board;
 		}	
 		
-		struct Game* game_create(void) {
-			struct Game* game = malloc(sizeof(struct Game));
+		struct Game *game_create(void) {
+			struct Game *game = malloc(sizeof(struct Game));
+			game->rng = rng_create();
 			game->board = board_create();
 			return game;
 		}
 
 int main(int argc, char **argv) {
 	
-	srand(time(NULL));
+	srandom(time(NULL));
 	
-	struct Game* game = game_create();
+	struct Game *game = game_create();
 	game_init(game);
 	
 	
@@ -789,6 +792,7 @@ int main(int argc, char **argv) {
 	printf("6. Game Over: Grid fills up with no more moves.\n");
 	printf("7. Scoring: Points for each merged tile.\n");
 	printf("8. Strategy: Plan ahead to create higher value tiles and keep the grid open.\n");
+	printf("9. Press 'q' to quit\n");
 	printf("\t\t\t=> You can do the following moves\n");
 	printf("\t\t\t1.Press 'w' to swipe top \n");
 	printf("\t\t\t2.Press 'a' to swipe left \n");
